@@ -154,9 +154,16 @@ class BridgeDetectorTest {
     }
 
     @Test
-    fun `hero detection takes priority over alias`() {
-        // If heroes has a bot, use that — don't fall through to alias
+    fun `alias detection takes priority over hero user IDs`() {
+        // Canonical alias is checked first; hero IDs only used as fallback
         val result = BridgeDetector.detect(listOf("@signalbot:matrix.org"), "#discord_123:matrix.org")
+        assertThat(result).isEqualTo(BridgeType.DISCORD)
+    }
+
+    @Test
+    fun `hero user IDs used when alias does not match`() {
+        // No recognisable alias prefix → fall through to hero check
+        val result = BridgeDetector.detect(listOf("@signalbot:matrix.org"), "#general:matrix.org")
         assertThat(result).isEqualTo(BridgeType.SIGNAL)
     }
 

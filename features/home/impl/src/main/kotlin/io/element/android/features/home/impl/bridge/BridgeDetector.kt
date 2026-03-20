@@ -9,22 +9,26 @@ package io.element.android.features.home.impl.bridge
 
 object BridgeDetector {
     /**
-     * Detects bridge type from hero user IDs (DM rooms) with fallback to canonical alias (group rooms).
+     * Detects bridge type for a room.
+     * Priority: canonical alias → hero user IDs → null (no bridge detected).
+     * Canonical alias is cheaper and more reliable for group rooms; hero IDs are only
+     * checked when no alias match is found.
      * mautrix bridge bots use consistent local part naming across all homeservers.
      * mautrix group room aliases default to: {bridgename}_{identifier}
      */
     fun detect(userIds: List<String>, canonicalAlias: String? = null): BridgeType? {
-        // Primary: check hero user IDs (works for DMs where bot is a hero)
+        // Primary: canonical alias (cheap string op, reliable for group rooms)
+        // Alias format: #discord_123456:server or #telegram_groupname:server
+        if (canonicalAlias != null) {
+            val aliasLocal = canonicalAlias.removePrefix("#").substringBefore(":").substringBefore("_").lowercase()
+            val type = matchAliasPrefix(aliasLocal)
+            if (type != null) return type
+        }
+        // Fallback: hero user IDs (works for DMs; skipped if alias already matched)
         for (userId in userIds) {
             val localPart = userId.removePrefix("@").substringBefore(":").lowercase()
             val type = matchLocalPart(localPart)
             if (type != null) return type
-        }
-        // Fallback: check canonical alias local part (works for group rooms)
-        // Alias format: #discord_123456:server or #telegram_groupname:server
-        if (canonicalAlias != null) {
-            val aliasLocal = canonicalAlias.removePrefix("#").substringBefore(":").substringBefore("_").lowercase()
-            return matchAliasPrefix(aliasLocal)
         }
         return null
     }
