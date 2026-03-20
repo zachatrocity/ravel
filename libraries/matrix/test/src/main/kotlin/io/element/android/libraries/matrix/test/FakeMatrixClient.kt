@@ -113,6 +113,7 @@ class FakeMatrixClient(
     private val performDatabaseVacuumLambda: () -> Result<Unit> = { lambdaError() },
     private val getDatabaseSizesLambda: () -> Result<SdkStoreSizes> = { lambdaError() },
     private val resetWellKnownConfigLambda: () -> Result<Unit> = { lambdaError() },
+    private val getRoomMemberUserIdsLambda: (RoomId, Int) -> List<String> = { _, _ -> emptyList() },
 ) : MatrixClient {
     var setDisplayNameCalled: Boolean = false
         private set
@@ -157,7 +158,7 @@ class FakeMatrixClient(
     }
 
     override suspend fun getRoomMemberUserIds(roomId: RoomId, limit: Int): List<String> {
-        return emptyList()
+        return getRoomMemberUserIdsLambda(roomId, limit)
     }
 
     override suspend fun findDM(userId: UserId): Result<RoomId?> {

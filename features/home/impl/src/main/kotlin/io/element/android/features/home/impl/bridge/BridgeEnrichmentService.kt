@@ -8,10 +8,10 @@
 package io.element.android.features.home.impl.bridge
 
 import dev.zacsweers.metro.Inject
+import io.element.android.libraries.core.coroutine.CoroutineDispatchers
 import io.element.android.libraries.matrix.api.MatrixClient
 import io.element.android.libraries.matrix.api.core.RoomId
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -29,6 +29,7 @@ import timber.log.Timber
 class BridgeEnrichmentService(
     private val client: MatrixClient,
     private val cache: BridgeTypeCache,
+    private val dispatchers: CoroutineDispatchers,
 ) {
     /**
      * For each room with unknown bridge type, fetch members in the background
@@ -38,7 +39,7 @@ class BridgeEnrichmentService(
         val unchecked = roomIds.filter { !cache.contains(it) }
         if (unchecked.isEmpty()) return
 
-        scope.launch(Dispatchers.IO) {
+        scope.launch(dispatchers.io) {
             unchecked.forEach { roomId ->
                 try {
                     enrichRoom(roomId)
