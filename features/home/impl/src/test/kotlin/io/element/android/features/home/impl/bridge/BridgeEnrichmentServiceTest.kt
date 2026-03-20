@@ -15,7 +15,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 class BridgeEnrichmentServiceTest {
-
     private val roomId1 = RoomId("!room1:matrix.org")
     private val roomId2 = RoomId("!room2:matrix.org")
     private val roomId3 = RoomId("!room3:matrix.org")
