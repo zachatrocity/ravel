@@ -142,7 +142,7 @@ class BridgeEnrichmentServiceTest {
     fun `enrich marks room checked and swallows exception`() = runTest {
         val cache = BridgeTypeCache()
         val client = FakeMatrixClient(
-            getRoomMemberUserIdsLambda = { _, _ -> throw RuntimeException("Simulated SDK failure") }
+            getRoomMemberUserIdsLambda = { _, _ -> throw IllegalStateException("Simulated SDK failure") }
         )
         val service = BridgeEnrichmentService(client, cache, testCoroutineDispatchers())
 
