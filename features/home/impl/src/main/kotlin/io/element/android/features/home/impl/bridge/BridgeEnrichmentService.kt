@@ -8,10 +8,10 @@
 package io.element.android.features.home.impl.bridge
 
 import dev.zacsweers.metro.Inject
+import io.element.android.libraries.core.coroutine.CoroutineDispatchers
 import io.element.android.libraries.matrix.api.MatrixClient
 import io.element.android.libraries.matrix.api.core.RoomId
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -29,6 +29,7 @@ import timber.log.Timber
 class BridgeEnrichmentService(
     private val client: MatrixClient,
     private val cache: BridgeTypeCache,
+    private val dispatchers: CoroutineDispatchers,
 ) {
     /**
      * For each room with unknown bridge type, fetch members in the background
@@ -38,7 +39,7 @@ class BridgeEnrichmentService(
         val unchecked = roomIds.filter { !cache.contains(it) }
         if (unchecked.isEmpty()) return
 
-        scope.launch(Dispatchers.IO) {
+        scope.launch(dispatchers.io) {
             unchecked.forEach { roomId ->
                 try {
                     enrichRoom(roomId)
@@ -51,19 +52,18 @@ class BridgeEnrichmentService(
     }
 
     private suspend fun enrichRoom(roomId: RoomId) {
-        val room = client.getRoom(roomId) ?: run {
+        // Use the lightweight path that bypasses the room factory mutex,
+        // so background enrichment never blocks room navigation.
+        val userIds = client.getRoomMemberUserIds(roomId, limit = 50)
+        if (userIds.isEmpty()) {
             cache.markChecked(roomId)
             return
         }
-        room.use { baseRoom ->
-            val members = baseRoom.getMembers(limit = 50).getOrNull().orEmpty()
-            val userIds = members.map { it.userId.value }
-            val detected = BridgeDetector.detect(userIds = userIds)
-            if (detected != null) {
-                cache.put(roomId, detected)
-            } else {
-                cache.markChecked(roomId)
-            }
+        val detected = BridgeDetector.detect(userIds = userIds)
+        if (detected != null) {
+            cache.put(roomId, detected)
+        } else {
+            cache.markChecked(roomId)
         }
     }
 }

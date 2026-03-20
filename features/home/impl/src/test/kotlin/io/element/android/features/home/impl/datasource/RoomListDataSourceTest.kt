@@ -116,6 +116,7 @@ class RoomListDataSourceTest {
         bridgeEnrichmentService = io.element.android.features.home.impl.bridge.BridgeEnrichmentService(
             client = io.element.android.libraries.matrix.test.FakeMatrixClient(),
             cache = io.element.android.features.home.impl.bridge.BridgeTypeCache(),
+            dispatchers = testCoroutineDispatchers(),
         ),
         bridgeTypeCache = io.element.android.features.home.impl.bridge.BridgeTypeCache(),
     )

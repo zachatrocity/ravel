@@ -69,6 +69,12 @@ interface MatrixClient {
     val roomMembershipObserver: RoomMembershipObserver
     suspend fun getJoinedRoom(roomId: RoomId): JoinedRoom?
     suspend fun getRoom(roomId: RoomId): BaseRoom?
+
+    /**
+     * Lightweight member user ID fetch for bridge detection — bypasses the room factory
+     * mutex so it never blocks navigation. Returns up to [limit] member user IDs.
+     */
+    suspend fun getRoomMemberUserIds(roomId: RoomId, limit: Int = 50): List<String>
     suspend fun findDM(userId: UserId): Result<RoomId?>
     suspend fun getJoinedRoomIds(): Result<Set<RoomId>>
     suspend fun ignoreUser(userId: UserId): Result<Unit>
