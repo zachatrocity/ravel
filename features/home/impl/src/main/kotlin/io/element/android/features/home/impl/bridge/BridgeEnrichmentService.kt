@@ -51,19 +51,18 @@ class BridgeEnrichmentService(
     }
 
     private suspend fun enrichRoom(roomId: RoomId) {
-        val room = client.getRoom(roomId) ?: run {
+        // Use the lightweight path that bypasses the room factory mutex,
+        // so background enrichment never blocks room navigation.
+        val userIds = client.getRoomMemberUserIds(roomId, limit = 50)
+        if (userIds.isEmpty()) {
             cache.markChecked(roomId)
             return
         }
-        room.use { baseRoom ->
-            val members = baseRoom.getMembers(limit = 50).getOrNull().orEmpty()
-            val userIds = members.map { it.userId.value }
-            val detected = BridgeDetector.detect(userIds = userIds)
-            if (detected != null) {
-                cache.put(roomId, detected)
-            } else {
-                cache.markChecked(roomId)
-            }
+        val detected = BridgeDetector.detect(userIds = userIds)
+        if (detected != null) {
+            cache.put(roomId, detected)
+        } else {
+            cache.markChecked(roomId)
         }
     }
 }

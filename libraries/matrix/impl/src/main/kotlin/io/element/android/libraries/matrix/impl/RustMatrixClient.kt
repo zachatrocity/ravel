@@ -321,6 +321,23 @@ class RustMatrixClient(
     }
 
     /**
+     * Lightweight member user ID fetch that bypasses the room factory mutex.
+     * Uses the inner room list service directly so navigation is never blocked.
+     */
+    override suspend fun getRoomMemberUserIds(roomId: RoomId, limit: Int): List<String> = withContext(sessionDispatcher) {
+        try {
+            innerRoomListService.roomOrNull(roomId.value)?.use { sdkRoom ->
+                sdkRoom.members().use { iterator ->
+                    iterator.nextChunk(limit.toUInt()).orEmpty().map { member -> member.userId }
+                }
+            }.orEmpty()
+        } catch (e: Exception) {
+            Timber.w(e, "getRoomMemberUserIds failed for $roomId")
+            emptyList()
+        }
+    }
+
+    /**
      * Wait for the room to be available in the client with the correct membership for the current user.
      * @param roomId the room id to wait for
      * @param timeout the timeout to wait for the room to be available

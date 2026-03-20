@@ -156,6 +156,10 @@ class FakeMatrixClient(
         return getRoomResults[roomId] as? JoinedRoom
     }
 
+    override suspend fun getRoomMemberUserIds(roomId: RoomId, limit: Int): List<String> {
+        return emptyList()
+    }
+
     override suspend fun findDM(userId: UserId): Result<RoomId?> {
         return findDmResult
     }
